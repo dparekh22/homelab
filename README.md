@@ -17,15 +17,15 @@ By evaluating these factors, I aim to determine the most efficient and scalable 
 
 ### At-Home DevOps Lab
 
-** Hardware Costs: **
+**Hardware Costs:**
 - Compute: $108.66 (one-time cost) HP EliteDesk 800 G2 Desktop Mini Business PC, Intel Quad-Core i5-6500T up to 3.1G,16G DDR4,240G SSD
 - Networking: $0 (using an existing router)
 - Storage: $0 (no external storage needed)
 
-** Software Costs: ** 
+**Software Costs:** 
 - $0 (using open-source tools)
 
-** Operational Costs: **
+**Operational Costs:**
 - Internet:
   - $0 Sunk cost as I am already paying for it at home
 - Electricity Consumption: $3.53/month
@@ -35,10 +35,16 @@ By evaluating these factors, I aim to determine the most efficient and scalable 
   - Monthly Energy Consumption=Daily Consumption×30days
     - 0.84kWh/day×30days=25.2kWh/month
     - 25.2kWh×$0.14/kWh=$3.53/month
-- Total At-Home Lab Costs: $108.66 one time cost, $3.53/month recurring expenses, $151.02 for the first year
+- **Total At-Home Lab Costs:**
+    - Compute: $108.66
+    - Storage: $0
+    - Networking: $0
+    - Software: $0
+    - Electricity: $0
+    - Total: $108.66 one time cost, $3.53/month recurring expenses, $151.02 for the first year
 
 ### Cloud DevOps Lab
-** Hardware Costs: ** 
+**Hardware Costs:** 
 - Compute: t3.xlarge (4 vCPU, 16GB RAM) = $.1664 USD per hour
   - $.1664 x 24 hours = $3.9936 per day
   - $3.9936 * 30 days = $119.808 per month
@@ -49,16 +55,18 @@ By evaluating these factors, I aim to determine the most efficient and scalable 
 - Storage: 240GB GP3: GP3 storage cost: $0.08 per GB per month.
   - Monthly storage cost = 240 GB × $0.08 / G B = $19.20
 
-### Total Cloud Lab Costs
+- **Total Cloud Lab Costs**
   - Compute: $119.808/month
   - Storage: $19.20
   - Networking: $32.40
+  - Software: $0
   - Total: $180.408/month or $2,164.90/year
 
 | **Cost Component**       | **At-Home Lab**               | **Cloud Lab**                |
 |--------------------------|-------------------------------|------------------------------|
 | **Compute**              | $108.66 (One-Time)            | $119.808/month               |
 | **Storage**              | $0                            | $19.20/month                 |
+| **Software**             | $0                            | $0                           |
 | **Networking**           | $0                            | $41.40/month                 |
 | **Electricity**          | $3.53/month                   | $0                           |
 | **Total (First Year)**   | ~$151.02/year                 | ~$2,164.90/year              |

@@ -1,7 +1,7 @@
 Homelab
 
 Goal: 
-My goal for this project is to create a cost effective1 self-learning lab where I can dive deeper into the tools and technologies I’m passionate about. I believe that having a personal lab for hands-on experimentation and practice is invaluable for building expertise and confidence. 
+My goal for this project is to create a cost-effective, self-learning lab where I can dive deeper into the tools and technologies I’m passionate about. I believe that having a personal lab for hands-on experimentation and practice is invaluable for building expertise and confidence.
 
 To achieve this, I plan to set up a single control plane Kubernetes (K8s) environment. This will serve as a platform for me to continue honing my DevOps practices, exploring container orchestration, and experimenting with automation, CI/CD pipelines, and other cloud-native technologies.
 
@@ -52,5 +52,14 @@ Hardware Costs: t3.xlarge (4 vCPU, 16GB RAM), 240GB GP3
   - Storage: $19.20
   - Networking: $32.40
   - Total: $180.408/month or $2,164.90/year
-  - 
-Cloud mainly benefits from economies of scale so I already knew running the at home lab at this workload would be cheaper, but I thought it would be a good excercise to really sit down and compare the two neck and neck.
+
+| **Cost Component**       | **At-Home Lab**               | **Cloud Lab**                |
+|--------------------------|-------------------------------|------------------------------|
+| **Hardware (One-Time)**  | $108.66                       | $0                           |
+| **Compute**              | $0                            | $119.808/month               |
+| **Storage**              | $0                            | $19.20/month                 |
+| **Networking**           | $0 or $14/month (internet)    | $41.40/month                 |
+| **Electricity**          | $3.53/month                   | $0                           |
+| **Total (First Year)**   | ~$151.02                      | ~$2,164.90                   |
+    
+Cloud solutions mainly benefit from economies of scale, so I already knew running the at-home lab at this workload would be cheaper. However, I thought it would be a good exercise to sit down and compare the two side by side. This analysis has helped me better understand the trade-offs between cost, scalability, and functionality for my learning and experimentation needs.

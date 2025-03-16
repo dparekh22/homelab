@@ -72,3 +72,13 @@ By evaluating these factors, I aim to determine the most efficient and scalable 
 | **Total (First Year)**   | ~$151.02/year                 | ~$2,164.90/year              |
     
 Cloud solutions mainly benefit from economies of scale, so I already knew running the at-home lab at this workload would be cheaper. However, I thought it would be a good exercise to sit down and compare the two side by side. This analysis has helped me better understand the trade-offs between cost, scalability, and functionality for my learning and experimentation needs.
+
+### Installation and Setup
+**Linux**
+For my home server setup, I opted to install Ubuntu Server due to its user-friendly nature and robust community support. I followed a process closely aligned with the official Ubuntu documentation, which provides a clear and comprehensive guide for installation. You can refer to the official tutorial here: [Install Ubuntu Server](https://ubuntu.com/tutorials/install-ubuntu-server#1-overview)
+
+
+**OpenSSH**
+To enable secure remote access to the server from my Mac, I installed OpenSSH and implemented security best practices. This included disabling password-based authentication to reduce the risk of brute-force attacks and configuring SSH key pairs for secure, passwordless login. If you're interested in setting up SSH key-based authentication for your own server, I recommend following this detailed guide:  [SSH Key Pair](https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server). This approach ensures a more secure and streamlined remote access experience.
+
+

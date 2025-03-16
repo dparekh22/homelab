@@ -81,4 +81,17 @@ For my home server setup, I opted to install Ubuntu Server due to its user-frien
 **OpenSSH**
 To enable secure remote access to the server from my Mac, I installed OpenSSH and implemented security best practices. This included disabling password-based authentication to reduce the risk of brute-force attacks and configuring SSH key pairs for secure, passwordless login. If you're interested in setting up SSH key-based authentication for your own server, I recommend following this detailed guide:  [SSH Key Pair](https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server). This approach ensures a more secure and streamlined remote access experience.
 
+**Docker**
+I will be using Docker to manage and run my containerized workloads. Following the official [Docker installation for Ubuntu](https://docs.docker.com/engine/install/ubuntu/), I successfully installed the core components, including:
 
+- docker-ce: The Docker Community Edition engine, which powers container runtime and management.
+
+- docker-ce-cli: The Docker command-line interface for interacting with the Docker daemon.
+
+- containerd.io: The underlying container runtime responsible for managing container lifecycle operations.
+
+- docker-buildx-plugin: A tool for building multi-architecture Docker images.
+
+- docker-compose-plugin: For defining and running multi-container applications using Docker Compose.
+
+This setup provides a robust foundation for containerization and will serve as a stepping stone for my Kubernetes setup, where I can launch containers at scale.

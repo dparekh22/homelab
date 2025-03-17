@@ -99,12 +99,12 @@ Refer to the official documentation for creating a cluster with `kubeadm`:
 
 #### **Key Steps:**
 1. **Initialize the Kubernetes Cluster**:
-    ```bash
-    sudo kubeadm init
+     ```bash
+     sudo kubeadm init
 
-    #on successful initialization, you will see a message like:
-    Your Kubernetes control-plane has initialized successfully!
-    ```
+     #on successful initialization, you will see a message like:
+     Your Kubernetes control-plane has initialized successfully!
+     ```
 2. **Set Up kubectl:**
    - Configure kubectl to access the cluster:
      ```bash

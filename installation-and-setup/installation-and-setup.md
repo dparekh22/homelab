@@ -1,89 +1,161 @@
-#Homelab Installation and Setup
+# Homelab Installation and Setup
 
-## Linux
-For my home server setup, I opted to install Ubuntu Server due to its user-friendly nature and robust community support. I followed a process closely aligned with the official Ubuntu documentation, which provides a clear and comprehensive guide for installation. You can refer to the official tutorial here: [Install Ubuntu Server](https://ubuntu.com/tutorials/install-ubuntu-server#1-overview)
+This document outlines the steps I followed to set up my homelab environment, including the installation of Ubuntu Server, OpenSSH, Docker, and Kubernetes (K8s) using `kubeadm`. It also includes troubleshooting steps for common issues encountered during the setup.
 
+---
 
-## OpenSSH
-To enable secure remote access to the server from my Mac, I installed OpenSSH and implemented security best practices. This included disabling password-based authentication to reduce the risk of brute-force attacks and configuring SSH key pairs for secure, passwordless login. If you're interested in setting up SSH key-based authentication for your own server, I recommend following this detailed guide:  [SSH Key Pair](https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server). This approach ensures a more secure and streamlined remote access experience.
+## **Linux**
+For my home server setup, I chose **Ubuntu Server** due to its user-friendly nature and robust community support. I followed the official Ubuntu documentation for installation, which provides a clear and comprehensive guide. You can refer to the official tutorial here:  
+[Install Ubuntu Server](https://ubuntu.com/tutorials/install-ubuntu-server#1-overview)
 
-## Docker
-I will be using Docker to manage and run my containerized workloads. Following the official [Docker installation for Ubuntu](https://docs.docker.com/engine/install/ubuntu/), I successfully installed the core components, including:
+---
 
-- docker-ce: The Docker Community Edition engine, which powers container runtime and management.
+## **OpenSSH**
+To enable secure remote access to the server from my Mac, I installed **OpenSSH** and implemented security best practices. This included:
+- Disabling password-based authentication to reduce the risk of brute-force attacks.
+- Configuring SSH key pairs for secure, passwordless login.
 
-- docker-ce-cli: The Docker command-line interface for interacting with the Docker daemon.
+For a detailed guide on setting up SSH key-based authentication, refer to:  
+[SSH Key Pair Setup](https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
 
-- containerd.io: The underlying container runtime responsible for managing container lifecycle operations.
+---
 
-- docker-buildx-plugin: A tool for building multi-architecture Docker images.
+## **Docker**
+I used **Docker** to manage and run containerized workloads. Following the official Docker installation guide for Ubuntu, I installed the following components:
+- **docker-ce**: The Docker Community Edition engine for container runtime and management.
+- **docker-ce-cli**: The Docker command-line interface for interacting with the Docker daemon.
+- **containerd.io**: The underlying container runtime responsible for managing container lifecycle operations.
+- **docker-buildx-plugin**: A tool for building multi-architecture Docker images.
+- **docker-compose-plugin**: For defining and running multi-container applications using Docker Compose.
 
-- docker-compose-plugin: For defining and running multi-container applications using Docker Compose.
+Refer to the official guide for installation:  
+[Docker Installation for Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
 
-This setup provides a robust foundation for containerization and will serve as a stepping stone for my Kubernetes setup, where I can launch containers at scale.
+---
 
+## **Bootstrapping Kubernetes (K8s)**
 
-## Bootstrapping K8
+### **1. Install `kubeadm` Tool**
+Before installing `kubeadm`, ensure all prerequisites are met. Refer to the official documentation:  
+[Install `kubeadm`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
 
-**Install Kubeadm Tool**
-Please check all pre requisites for kubeadm here: [Install Kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
-Some things to keep in mind are the following:
-- Docker Cgroup Driver
-  - This should be set to systemd as kubeadm will use systemd by default
-  - Check Docker Cgroup Driver: docker info | grep -i cgroup
-  - Change Cgroup Driver, edit /etc/docker/daemon.json and add
-  {
-  "exec-opts": ["native.cgroupdriver=systemd"]
-  }
-  - Restart Docker: sudo systemctl restart docker
-  - Verify the change: docker info | grep -i cgroup
-- Swap Memory
-  - The default behavior of a kubelet is to fail to start if swap memory is detected on a node.
-  - Turn off swap permanently
-    -  sudo su
-    -  swapoff -a
-    -  sudo vi /etc/fstab: comment swap line
-- Install Kubeadm Tool
-  - Update apt package index, install tools needed for Kubernetes apt repo
-    - sudo apt-get update
-    - sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-  - Download public signing key
-    - curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  - Add Kubernetes apt repository
-    - echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-  - Update the apt package index, install kubelet, kubeadm and kubectl, and pin their version
-    - sudo apt-get update
-    - sudo apt-get install -y kubelet kubeadm kubectl
-    - sudo apt-mark hold kubelet kubeadm kubectl
-  - Enable Kubelet Service
-    - sudo systemctl enable --now kubelet
+#### **Key Steps:**
+1. **Set Docker Cgroup Driver to `systemd`**:
+   - Check the current Cgroup driver:
+     ```bash
+     docker info | grep -i cgroup
+     ```
+   - Edit `/etc/docker/daemon.json` and add:
+     ```json
+     {
+       "exec-opts": ["native.cgroupdriver=systemd"]
+     }
+     ```
+   - Restart Docker:
+     ```bash
+     sudo systemctl restart docker
+     ```
+   - Verify the change:
+     ```bash
+     docker info | grep -i cgroup
+     ```
 
-**Creating a Cluster With Kubeadm***
-Please check all system requirements for a single node control plane here: [Creating a cluster with kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
-- Note: I had to edit containerd config to bypass an error I was getting when initially running sudo kubadm init.
-  - Some fatal errors occurred: failed to create new CRI runtime service: validate service connection: validate CRI v1 runtime API for endpoint "unix:///var/run/containerd/containerd.sock": rpc error: code = Unimplemented desc = unknown service runtime.v1.RuntimeService[preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`
-  - comment the following line and restart containerd:
-    - sudo vi /etc/containerd/config.toml
-      - disabled_plugins = ["cri"]
-    - sudo systemctl restart containerd.service   
-- sudo kubeadm init
-  - Your Kubernetes control-plane has initialized successfully!
-- Kubectl set up:
-  - mkdir -p $HOME/.kube
-  - sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  - sudo chown $(id -u):$(id -g) $HOME/.kube/config 
+2. **Disable Swap Memory**:
+   - Kubernetes requires swap to be disabled. To turn off swap permanently:
+     ```bash
+     sudo swapoff -a
+     sudo sed -i '/swap/d' /etc/fstab
+     ```
 
-**Cluster Troubleshooting**
-- After my kubeadm init finished I experienced constant crashing of my controlplane components. I could not find any specific reason from the logs of the containers. I checked the kubelet logs which manages the static pod core components, the individual pod logs, but I only noticed the etcd was getting a shutdown signal. After some online research I found there was an issue with containerd configuration. I followed the steps [here](https://github.com/etcd-io/etcd/issues/13670) and resolved my issue.
+3. **Install `kubeadm`, `kubelet`, and `kubectl`**:
+   - Update the package index and install dependencies:
+     ```bash
+     sudo apt-get update
+     sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+     ```
+   - Add the Kubernetes signing key:
+     ```bash
+     curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+     ```
+   - Add the Kubernetes APT repository:
+     ```bash
+     echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+     ```
+   - Install `kubeadm`, `kubelet`, and `kubectl`:
+     ```bash
+     sudo apt-get update
+     sudo apt-get install -y kubelet kubeadm kubectl
+     sudo apt-mark hold kubelet kubeadm kubectl
+     ```
+   - Enable and start the `kubelet` service:
+     ```bash
+     sudo systemctl enable --now kubelet
+     ```
 
+---
 
-**Install Pod Network**
-- After succesful cluster initialization, you will need to set up a pod network for your control plane to move into a ready state and coredns pods to move from pending to running
-- Install Calico as CNI:
-  - kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
-  - kubectl get pods -n kube-system -l k8s-app=calico-node
-  - kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
-  - kubectl get nodes
- 
-**Allow Pods On ControlPlane**
-- kubectl taint nodes <control-plane-node-name> node-role.kubernetes.io/control-plane:NoSchedule-
+### **2. Create a Cluster with `kubeadm`**
+Refer to the official documentation for creating a cluster with `kubeadm`:  
+[Creating a Cluster with `kubeadm`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
+
+#### **Key Steps:**
+1. **Initialize the Kubernetes Cluster**:
+   ```bash
+   sudo kubeadm init
+   ```
+   - On successful initialization, you will see a message like:
+   ```bash
+   Your Kubernetes control-plane has initialized successfully!
+   ```
+2. **Set Up kubectl:**
+   - Configure kubectl to access the cluster:
+     ```bash
+     mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+     ```
+3. **Install a Pod Network:**
+    After initializing the cluster, you need to install a Pod Network to enable communication between pods. I used Calico as the CNI (Container Network Interface).
+   - Install Calico:
+    ```bash
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+    kubectl get pods -n kube-system -l k8s-app=calico-node
+    kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
+    kubectl get nodes
+    ```
+4. **Allow Pods on the Control Plane**
+By default, the control plane node is tainted to prevent pods from being scheduled. To allow pods on the control plane, remove the taint:
+   ```bash
+   kubectl taint nodes <control-plane-node-name> node-role.kubernetes.io/control-plane:NoSchedule-
+   ```
+
+### **3. Cluster Troubleshooting**
+1. **Containerd Configuration Error**:
+   - During kubeadm init, I encountered the following error:
+     ```bash
+     Some fatal errors occurred: failed to create new CRI runtime service: validate service connection: validate CRI v1 runtime API for endpoint "unix:///var/run/containerd/containerd.sock": rpc error: code = Unimplemented desc = unknown service runtime.v1.RuntimeService
+     ```
+   - Fix:
+     Edit the containerd configuration file:
+     ```bash
+     sudo vi /etc/containerd/config.toml    
+     ```
+   - Comment out the line:
+     ```bash
+     disabled_plugins = ["cri"]
+     ```
+   - Restart containerd:
+     ```bash
+     sudo systemctl restart containerd.service
+     ```
+2. **Control Plane Component Crashes**:
+   - After completing kubeadm init, I experienced persistent crashes of control plane components. Upon investigation:
+    - The kubelet logs indicated issues with the etcd pod receiving shutdown signals.
+    - The root cause was related to the containerd configuration.
+
+   - Fix:
+    - I resolved the issue by following the steps outlined in this GitHub issue: [etcd Issue #13670](https://github.com/etcd-io/etcd/issues/13670)
+
+## Conclusion
+This setup provides a robust foundation for running containerized workloads and managing them at scale using Kubernetes. If you encounter issues, refer to the troubleshooting section or the official documentation for guidance.

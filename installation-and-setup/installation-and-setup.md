@@ -102,30 +102,27 @@ Refer to the official documentation for creating a cluster with `kubeadm`:
 1. **Initialize the Kubernetes Cluster**:
    ```bash
    sudo kubeadm init
-   ```
-   - On successful initialization, you will see a message like:
-   ```bash
-   Your Kubernetes control-plane has initialized successfully!
+   #on successful initialization, you will see a message like:
+    Your Kubernetes control-plane has initialized successfully!
    ```
 2. **Set Up kubectl:**
    - Configure kubectl to access the cluster:
      ```bash
      mkdir -p $HOME/.kube
-    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+     sudo chown $(id -u):$(id -g) $HOME/.kube/config
      ```
 3. **Install a Pod Network:**
-    After initializing the cluster, you need to install a Pod Network to enable communication between pods. I used Calico as the CNI (Container Network Interface).
    - Install Calico:
-    ```bash
-    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+     ```bash
+     kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
 
-    kubectl get pods -n kube-system -l k8s-app=calico-node
-    kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
-    kubectl get nodes
-    ```
+     kubectl get pods -n kube-system -l k8s-app=calico-node
+     kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
+     kubectl get nodes
+     ```
 4. **Allow Pods on the Control Plane**
-By default, the control plane node is tainted to prevent pods from being scheduled. To allow pods on the control plane, remove the taint:
+   - By default, the control plane node is tainted to prevent pods from being scheduled. To allow pods on the control plane, remove the taint:
    ```bash
    kubectl taint nodes <control-plane-node-name> node-role.kubernetes.io/control-plane:NoSchedule-
    ```
@@ -139,23 +136,21 @@ By default, the control plane node is tainted to prevent pods from being schedul
    - Fix:
      Edit the containerd configuration file:
      ```bash
-     sudo vi /etc/containerd/config.toml    
-     ```
-   - Comment out the line:
-     ```bash
+     sudo vi /etc/containerd/config.toml  
+     #comment out the line below
      disabled_plugins = ["cri"]
-     ```
-   - Restart containerd:
-     ```bash
+
+     #restart continerd
      sudo systemctl restart containerd.service
      ```
+
 2. **Control Plane Component Crashes**:
    - After completing kubeadm init, I experienced persistent crashes of control plane components. Upon investigation:
-    - The kubelet logs indicated issues with the etcd pod receiving shutdown signals.
-    - The root cause was related to the containerd configuration.
+        - The kubelet logs indicated issues with the etcd pod receiving shutdown signals.
+        - The root cause was related to the containerd configuration.
 
    - Fix:
-    - I resolved the issue by following the steps outlined in this GitHub issue: [etcd Issue #13670](https://github.com/etcd-io/etcd/issues/13670)
+        - I resolved the issue by following the steps outlined in this GitHub issue: [etcd Issue #13670](https://github.com/etcd-io/etcd/issues/13670)
 
 ## Conclusion
 This setup provides a robust foundation for running containerized workloads and managing them at scale using Kubernetes. If you encounter issues, refer to the troubleshooting section or the official documentation for guidance.

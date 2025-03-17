@@ -51,7 +51,8 @@ Before installing `kubeadm`, ensure all prerequisites are met. Refer to the offi
        "exec-opts": ["native.cgroupdriver=systemd"]
      }
 
-     #restart docker
+   - Restart Docker:
+     ```bash
      sudo systemctl restart docker
 
      #verify the change

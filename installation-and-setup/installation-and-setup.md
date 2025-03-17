@@ -50,13 +50,11 @@ Before installing `kubeadm`, ensure all prerequisites are met. Refer to the offi
      {
        "exec-opts": ["native.cgroupdriver=systemd"]
      }
-     ```
-   - Restart Docker:
-     ```bash
+
+     #restart docker
      sudo systemctl restart docker
-     ```
-   - Verify the change:
-     ```bash
+
+     #verify the change
      docker info | grep -i cgroup
      ```
 
@@ -68,19 +66,19 @@ Before installing `kubeadm`, ensure all prerequisites are met. Refer to the offi
      ```
 
 3. **Install `kubeadm`, `kubelet`, and `kubectl`**:
-   - Update the package index and install dependencies:
+   - Configure APT Repository: 
      ```bash
+     #update the package index and install dependencies:
      sudo apt-get update
      sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-     ```
-   - Add the Kubernetes signing key:
-     ```bash
+
+     #add the Kubernetes signing key:
      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-     ```
-   - Add the Kubernetes APT repository:
-     ```bash
+
+     #add the Kubernetes APT repository
      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
      ```
+
    - Install `kubeadm`, `kubelet`, and `kubectl`:
      ```bash
      sudo apt-get update
@@ -100,11 +98,12 @@ Refer to the official documentation for creating a cluster with `kubeadm`:
 
 #### **Key Steps:**
 1. **Initialize the Kubernetes Cluster**:
-   ```bash
-   sudo kubeadm init
-   #on successful initialization, you will see a message like:
+    ```bash
+    sudo kubeadm init
+
+    #on successful initialization, you will see a message like:
     Your Kubernetes control-plane has initialized successfully!
-   ```
+    ```
 2. **Set Up kubectl:**
    - Configure kubectl to access the cluster:
      ```bash
@@ -115,8 +114,10 @@ Refer to the official documentation for creating a cluster with `kubeadm`:
 3. **Install a Pod Network:**
    - Install Calico:
      ```bash
+     #create Calico K8s resources
      kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
 
+     #verify Calico installation
      kubectl get pods -n kube-system -l k8s-app=calico-node
      kubectl get pods -n kube-system -l k8s-app=calico-kube-controllers
      kubectl get nodes
@@ -136,7 +137,8 @@ Refer to the official documentation for creating a cluster with `kubeadm`:
    - Fix:
      Edit the containerd configuration file:
      ```bash
-     sudo vi /etc/containerd/config.toml  
+     sudo vi /etc/containerd/config.toml 
+
      #comment out the line below
      disabled_plugins = ["cri"]
 

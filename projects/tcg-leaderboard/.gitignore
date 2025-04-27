@@ -1,0 +1,24 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+env/
+
+# Environment variables (but consider a template for .env)
+.env
+
+# macOS system files
+.DS_Storea
+
+# Log files
+*.log
+
+# IDE/Editor directories (optional)
+.vscode/
+.idea/
+
+# Local development paths (if 'path/' is temporary)
+path/

@@ -52,64 +52,40 @@ resource "aws_security_group" "cloud_bot_sg" {
   }
 }
 
-# Variables
-variable "db_user" {
-  description = "PostgreSQL username"
-  type        = string
-}
-
-variable "db_password" {
-  description = "PostgreSQL password"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_name" {
-  description = "PostgreSQL database name"
-  type        = string
-}
-
-variable "ecr_repository_url" {
-  description = "ECR repository URL (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-repo)"
-  type        = string
-}
-
-variable "docker_image_tag" {
-  description = "Docker image tag to deploy"
-  type        = string
-  default     = "latest"
-}
-
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
-# Enable ECR access for EC2
-resource "aws_iam_role" "ec2_ecr_access" {
-  name = "ec2-ecr-access-role"
-
+# IAM role for EC2
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2-docker-host-role"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = { Service = "ec2.amazonaws.com" }
     }]
   })
 }
 
+# Attach policies
 resource "aws_iam_role_policy_attachment" "ecr_pull" {
-  role       = aws_iam_role.ec2_ecr_access.name
+  role       = aws_iam_role.ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+resource "aws_iam_role_policy" "ssm_read" {
+  role   = aws_iam_role.ec2_role.name
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action   = ["ssm:GetParameters"],
+      Effect   = "Allow",
+      Resource = ["arn:aws:ssm:us-east-1:*:parameter/discord-bot/*"]
+    }]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "ec2-ecr-access-profile"
-  role = aws_iam_role.ec2_ecr_access.name
+  name = "ec2-docker-host-profile"
+  role = aws_iam_role.ec2_role.name
 }
 
 module "ec2_instances" {
@@ -138,37 +114,6 @@ module "ec2_instances" {
               sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               docker-compose version
-
-              # Login to ECR
-              aws ecr get-login-password --region ${var.aws_region} | \
-              docker login --username AWS --password-stdin ${var.ecr_repository_url}
-  
-              # Create docker-compose.yml
-              mkdir -p /home/ec2-user/postgres_data
-              cat <<EOL > /home/ec2-user/docker-compose.yml
-              version: '3.8'
-              services:
-                postgres:
-                    image: postgres:13-alpine
-                    restart: always
-                    environment:
-                        POSTGRES_PASSWORD: ${var.db_password}
-                        POSTGRES_USER: ${var.db_user}
-                        POSTGRES_DB: ${var.db_name}
-                    volumes:
-                        - ./postgres_data:/var/lib/postgresql/data
-                    # Removed port exposure - access via container networking
-                    
-                discord_bot:
-                    image: ${var.ecr_repository_url}:${var.docker_image_tag}
-                    restart: unless-stopped
-                    depends_on:
-                        - postgres
-              EOL
-  
-              # Start containers
-              cd /home/ec2-user
-              docker-compose up -d
               EOF
 
   tags = {
@@ -180,8 +125,4 @@ module "ec2_instances" {
 
 output "instance_ip" {
   value = module.ec2_instances[0].public_ip
-}
-
-output "ecr_repository" {
-  value = var.ecr_repository_url
 }

@@ -1,0 +1,12 @@
+# macOS files
+.DS_Store
+
+# Terraform files
+**/.terraform/*
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.backup
+
+/projects/tcg-leaderboard/terraform/.terraform/
+/projects/tcg-leaderboard/terraform/.terraform/
+/projects/tcg-leaderboard/terraform/.terraform.lock.hcl

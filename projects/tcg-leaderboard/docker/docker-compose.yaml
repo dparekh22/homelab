@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "sh -c 'pg_isready -U postgres -d tcg_leaderboard'" 
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  cloud-bot:
+    image: ${ECR_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - API_BASE_URL=${API_BASE_URL}
+      - TARGET_MESSAGE_ID=${TARGET_MESSAGE_ID}
+      - ROLE_ID=${ROLE_ID}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    secrets:
+      - db_password
+    # Resource limits to prevent runaway usage
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  postgres_data:
+
+secrets:
+  db_user:
+    file: ./db_user.txt
+  db_password:
+    file: ./db_password.txt

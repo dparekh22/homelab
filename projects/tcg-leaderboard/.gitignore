@@ -11,7 +11,7 @@ env/
 .env
 
 # macOS system files
-.DS_Storea
+.DS_Store
 
 # Log files
 *.log

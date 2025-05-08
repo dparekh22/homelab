@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Boolean, DateTime, Integer, String, ForeignKey, Index
 from sqlalchemy.sql import func
 from database import Base
+from datetime import datetime
 
 # SQL Alchemy
 
@@ -35,7 +36,5 @@ class Match(Base):
     bounty_gain = Column(Integer, default=0)
     bounty_loss = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 

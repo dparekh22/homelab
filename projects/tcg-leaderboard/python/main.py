@@ -148,7 +148,7 @@ async def report_match(match: MatchBase, db: db_dependency):
         "bounty_change": {
             "gain": bounty_gain,
             "loss": bounty_loss
-        }
+        },
         "new_bounties": {
             winner.username: winner.bounty,
             loser.username: loser.bounty

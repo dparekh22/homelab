@@ -24,8 +24,6 @@ class MatchBase(BaseModel):
     player1_id: int
     player2_id: int
     winner_id: int
-    bounty_gain: int = 0
-    bounty_loss: int = 0
 
 class LeaderboardItem(BaseModel):
     rank: int

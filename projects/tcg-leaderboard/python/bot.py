@@ -190,11 +190,9 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
     
     # Prepare match data
     match_data = {
-        'player1_id': player1.id,
-        'player2_id': player2.id,
-        'winner_id': winner.id,
-        'bounty_gain': winner_bounty_gain,  
-        'bounty_loss': loser_bounty_loss
+        'player1_id': winner.id,
+        'player2_id': loser.id,
+        'winner_id': winner.id
     }
 
     async with aiohttp.ClientSession() as session:

@@ -210,22 +210,22 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
                         await update_player_rank_role(loser)
 
 
-                    await ctx.send(
-                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"🏆 **Match Result**\n"
-                        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        f"**Winner:** `{winner.display_name}` {winner_emoji}\n"
-                        f"**Loser:** `{loser.display_name}` {loser_emoji}\n"
-                        f"\n"
-                        f"📊 **Bounty Update**\n"
-                        f"`{winner.display_name}` ➕ {match_result['bounty_change']['gain']}฿ → `{match_result['new_bounties'][winner.username]}฿`\n"
-                        f"`{loser.display_name}` ➖ {match_result['bounty_change']['loss']}฿ → `{match_result['new_bounties'][loser.username]}฿`\n"
-                        f"\n"
-                        f"🎖 **Ranks**\n"
-                        f"{winner.display_name}: **{winner_rank}** {winner_emoji}\n"
-                        f"{loser.display_name}: **{loser_rank}** {loser_emoji}\n"
-                        f"━━━━━━━━━━━━━━━━━━━━━━━"
-                    )
+                        await ctx.send(
+                            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                            f"🏆 **Match Result**\n"
+                            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+                            f"**Winner:** `{winner.display_name}` {winner_emoji}\n"
+                            f"**Loser:** `{loser.display_name}` {loser_emoji}\n"
+                            f"\n"
+                            f"📊 **Bounty Update**\n"
+                            f"`{winner.display_name}` ➕ {match_result['bounty_change']['gain']}฿ → `{match_result['new_bounties'][winner.username]}฿`\n"
+                            f"`{loser.display_name}` ➖ {match_result['bounty_change']['loss']}฿ → `{match_result['new_bounties'][loser.username]}฿`\n"
+                            f"\n"
+                            f"🎖 **Ranks**\n"
+                            f"{winner.display_name}: **{winner_rank}** {winner_emoji}\n"
+                            f"{loser.display_name}: **{loser_rank}** {loser_emoji}\n"
+                            f"━━━━━━━━━━━━━━━━━━━━━━━"
+                        )
                         return True
 
                     except discord.Forbidden:

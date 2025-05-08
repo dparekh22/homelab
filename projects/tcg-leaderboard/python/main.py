@@ -225,6 +225,7 @@ async def get_player_rank(discord_id: str, db: Session = Depends(get_db)):
 @app.get("/leaderboard/", response_model=List[LeaderboardItem])
 async def get_leaderboard(db: db_dependency, limit: int = 10):
     players = db.query(models.Player)\
+        .filter(models.Player.username != "Cloud-Bot")\
         .order_by(models.Player.bounty.desc())\
         .limit(limit)\
         .all()

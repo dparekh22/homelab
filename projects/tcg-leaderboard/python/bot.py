@@ -222,8 +222,8 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
                             f"`{loser.display_name}` ➖ {match_result['bounty_change']['loss']}฿ → `{match_result['new_bounties'][loser.username]}฿`\n"
                             f"\n"
                             f"🎖 **Ranks**\n"
-                            f"{winner.display_name}: **{winner_rank}** {winner_emoji}\n"
-                            f"{loser.display_name}: **{loser_rank}** {loser_emoji}\n"
+                            f"{winner.display_name}: **{winner_rank}**\n"
+                            f"{loser.display_name}: **{loser_rank}**\n"
                             f"━━━━━━━━━━━━━━━━━━━━━━━"
                         )
                         return True

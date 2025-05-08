@@ -32,6 +32,10 @@ class Match(Base):
     player2_id = Column(Integer, ForeignKey('players.id'), nullable=False)
     winner_id = Column(Integer, ForeignKey('players.id'), nullable=False)
 
-    bounty_change = Column(Integer, default=0)
+    bounty_gain = Column(Integer, default=0)
+    bounty_loss = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 

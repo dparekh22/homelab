@@ -154,17 +154,24 @@ async def report_match(match: MatchBase, db: db_dependency):
     }
 
 def handle_cloudbot_match(match, player1, player2, db, base_change):
-    # Identify human player
-    human_player = player1 if match.player2_username == "Cloud-Bot" else player2
+    # Determine if Cloud-Bot is player1 or player2
+    if match.player1_username == "Cloud-Bot":
+        cloudbot_player = player1
+        human_player = player2
+    else:
+        cloudbot_player = player2
+        human_player = player1
+
     human_username = human_player.username if human_player else None
 
+    # If there is no registered human player, raise an error
     if not human_player:
         raise HTTPException(status_code=400, detail="No registered human player found")
 
     human_won = match.winner_username == human_username
     bounty_change = base_change if human_won else -base_change
 
-    # Update human player
+    # Update human player's stats
     human_player.bounty = max(0, human_player.bounty + bounty_change)
     if human_won:
         human_player.wins += 1
@@ -174,9 +181,9 @@ def handle_cloudbot_match(match, player1, player2, db, base_change):
 
     # Build match record
     match_record = models.Match(
-        player1_id=player1.id if player1.username != "Cloud-Bot" else None,
-        player2_id=player2.id if player2.username != "Cloud-Bot" else None,
-        winner_id=human_player.id if human_won else None,
+        player1_id=player1.id if player1.username != "Cloud-Bot" else cloudbot_player.id,
+        player2_id=player2.id if player2.username != "Cloud-Bot" else cloudbot_player.id,
+        winner_id=human_player.id if human_won else cloudbot_player.id,
         bounty_change=bounty_change
     )
 

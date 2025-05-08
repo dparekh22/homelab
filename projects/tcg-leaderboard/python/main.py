@@ -20,10 +20,12 @@ class PlayerBase(BaseModel):
     rank: str = 'Bronze'
     bounty: int = 0
 
-class MatchBase(BaseModel):
-    player1_username: str 
-    player2_username: str
-    winner_username: str
+class MatchCreate(BaseModel):
+    player1_id: int
+    player2_id: int
+    winner_id: int
+    bounty_gain: int = 0
+    bounty_loss: int = 0
 
 class LeaderboardItem(BaseModel):
     rank: int
@@ -150,12 +152,12 @@ async def report_match(match: MatchBase, db: db_dependency):
             "loss": bounty_loss
         },
         "new_bounties": {
-            winner.username: winner.bounty,
-            loser.username: loser.bounty
+            winner.discord_id: winner.bounty,
+            loser.discord_id: loser.bounty
         },
         "new_ranks": {
-            winner.username: winner.rank,
-            loser.username: loser.rank
+            winner.discord_id: winner.rank,
+            loser.discord_id: loser.rank
         }
     }
 

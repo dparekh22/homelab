@@ -209,6 +209,8 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
                         await update_player_rank_role(winner)
                         await update_player_rank_role(loser)
 
+                        winner_rank = match_result['new_ranks'][winner.name]
+                        loser_rank = match_result['new_ranks'][loser.name]
 
                         await ctx.send(
                             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -218,8 +220,8 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
                             f"**Loser:** `{loser.display_name}`\n"
                             f"\n"
                             f"📊 **Bounty Update**\n"
-                            f"`{winner.display_name}` ➕ {match_result['bounty_change']['gain']}฿ → `{match_result['new_bounties'][winner.display_name]}฿`\n"
-                            f"`{loser.display_name}` ➖ {match_result['bounty_change']['loss']}฿ → `{match_result['new_bounties'][loser.display_name]}฿`\n"
+                            f"`{winner.display_name}` ➕ {match_result['bounty_change']['gain']}฿ → `{match_result['new_bounties'][winner.name]}฿`\n"
+                            f"`{loser.display_name}` ➖ {match_result['bounty_change']['loss']}฿ → `{match_result['new_bounties'][loser.name]}฿`\n"
                             f"\n"
                             f"🎖 **Ranks**\n"
                             f"{winner.display_name}: **{winner_rank}**\n"

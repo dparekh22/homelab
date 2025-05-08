@@ -95,8 +95,8 @@ async def report_match(match: MatchBase, db: db_dependency):
     BASE_CHANGE = 25
 
     # Fetch players from DB
-    player1 = db.query(models.Player).filter(models.Player.username == match.player1_username).first()
-    player2 = db.query(models.Player).filter(models.Player.username == match.player2_username).first()
+    player1 = db.query(models.Player).filter(models.Player.username == match.player1_id).first()
+    player2 = db.query(models.Player).filter(models.Player.username == match.player2_id).first()
 
     # Determine if this is a Cloud-Bot match
     is_vs_cloudbot = match.player1_username == "Cloud-Bot" or match.player2_username == "Cloud-Bot"

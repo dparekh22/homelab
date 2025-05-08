@@ -168,62 +168,49 @@ async def get_member_by_username(ctx, username: str) -> Optional[discord.Member]
             return member
     return None   
 
-# Report match
+#Report match
 @bot.command(name='reportmatch')
 @cooldown(1, 30, BucketType.user)  # 1 use per 30 seconds per user
-async def report_match(ctx, winner: str, loser: str):
+async def report_match(ctx, winner: discord.Member, loser: discord.Member):
 
-    # Fetch members by username
-    winner_member = await get_member_by_username(ctx, winner)
-    loser_member = await get_member_by_username(ctx, loser)
-
-    if not winner_member:
-        await ctx.send(f"❌ Could not find player '{winner}'")
-        return
-        
-    if not loser_member:
-        await ctx.send(f"❌ Could not find player '{loser}'")
-        return
-
-    if winner_member.id == loser_member.id:
+    if winner.id == loser.id:
         await ctx.send("❌ A player can't compete against themselves!")
         return
 
-    # Get their Discord IDs
-    winner_discord_id = winner_member.id
-    loser_discord_id = loser_member.id
+    # Check player existence
+    player_exists_winner = await check_player_exists(winner.id)
+    player_exists_loser = await check_player_exists(loser.id)
 
-    player_exists_winner = await check_player_exists(winner_discord_id)
-    player_exists_loser = await check_player_exists(loser_discord_id)
-
-    if not player_exists_winner or not player_exists_loser:
-        await ctx.send("One or both players do not exist in the database!")
+    if not player_exists_winner:
+        await ctx.send(f"❌ Could not find player '{winner}'")
+    
+    if not player_exists_loser:
+        await ctx.send(f"❌ Could not find player '{loser}'")
         return
     
-    # Create match_data
+    # Prepare match data
     match_data = {
-        'player1_username': winner,
-        'player2_username': loser,
-        'winner_username': winner
-
+        'player1_username': winner.name,
+        'player2_username': loser.name,
+        'winner_username': winner.name
     }
+
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(
                 f'{API_BASE_URL}/report_match',
                 json=match_data
             ) as response:
-
                 if response.status == 201:
                     match_result = await response.json()
                     logging.info(f"Match result: {match_result}")
 
                     try:
-                        await update_player_rank_role(winner_member)
-                        await update_player_rank_role(loser_member)
+                        await update_player_rank_role(winner)
+                        await update_player_rank_role(loser)
 
                         await ctx.send(
-                            f"🏆 Match recorded! {winner} defeated {loser}\n"
+                            f"🏆 Match recorded! {winner.mention} defeated {loser.mention}\n"
                             f"💰 Bounty change: {match_result['bounty_change']}\n"
                         )
                         return True
@@ -232,8 +219,7 @@ async def report_match(ctx, winner: str, loser: str):
                         await ctx.send("Match recorded, but I couldn't update roles (missing permissions)")
                     except Exception as e:
                         logging.critical(
-                            f'Failed to update roles | User: {member.id} | '
-                            f'Error: {str(e)} | State may be inconsistent!'
+                            f'Failed to update roles | Winner: {winner.id}, Loser: {loser.id} | Error: {str(e)}'
                         )
                         await ctx.send("Match recorded, but there was an issue updating roles")
 
@@ -242,16 +228,11 @@ async def report_match(ctx, winner: str, loser: str):
                     await ctx.send(f"❌ Failed to report match: {error}")
                     return False
 
-                logging.error(f"API Error: {await response.text()}")
-                await ctx.send("Failed to report match. Please try again.")
-                return False
         except Exception as e:
-            logging.error(
-                f"Match reporting failed | Winner: {winner.id} | "
-                f"Loser: {loser.id} | Error: {str(e)}"
-            )
-            await ctx.send("An error occurred while reporting the match.")
+            logging.error(f"Match reporting failed | Error: {str(e)}")
+            await ctx.send("⚡ An error occurred while reporting the match.")
             return False
+
 
 
 async def update_player_rank_role(member: discord.Member):

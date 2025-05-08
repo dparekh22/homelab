@@ -90,52 +90,58 @@ async def register_player(player: PlayerBase, db: db_dependency):
     db.refresh(new_player)
     return new_player 
 
-# Report Match
 @app.post('/report_match', status_code=status.HTTP_201_CREATED)
 async def report_match(match: MatchBase, db: db_dependency):
+    BASE_CHANGE = 25
 
+    # Fetch players from DB
     player1 = db.query(models.Player).filter(models.Player.username == match.player1_username).first()
     player2 = db.query(models.Player).filter(models.Player.username == match.player2_username).first()
 
+    # Determine if this is a Cloud-Bot match
+    is_vs_cloudbot = match.player1_username == "Cloud-Bot" or match.player2_username == "Cloud-Bot"
+
+    if is_vs_cloudbot:
+        return handle_cloudbot_match(match, player1, player2, db, BASE_CHANGE)
+
+    # --- Normal Match ---
     if not player1 or not player2:
         raise HTTPException(status_code=404, detail="One or both players not found")
 
-    # Determine winner and loser based on username
-    if match.winner_username == player1.username:
-        winner, loser = player1, player2
-    elif match.winner_username == player2.username:
-        winner, loser = player2, player1
-    else:
+    if match.winner_username not in [player1.username, player2.username]:
         raise HTTPException(status_code=400, detail="Winner must match one of the player usernames")
+
+    winner, loser = (player1, player2) if match.winner_username == player1.username else (player2, player1)
 
     # Calculate bounty change
     bounty_change = max(10, 50 - (winner.bounty - loser.bounty) // 10)
 
-    # Update player stats
+    # Update stats
     winner.bounty += bounty_change
     winner.wins += 1
     loser.bounty = max(0, loser.bounty - bounty_change)
     loser.losses += 1
 
-    # Update Ranks    
+    # Update ranks
     winner.rank = calculate_rank(winner.bounty)
     loser.rank = calculate_rank(loser.bounty)
-    
+
     # Record match
-    new_match = models.Match(
-        player1_id = player1.id,
-        player2_id = player2.id,
-        winner_id = winner.id,
-        bounty_change = bounty_change
+    match_record = models.Match(
+        player1_id=player1.id,
+        player2_id=player2.id,
+        winner_id=winner.id,
+        bounty_change=bounty_change
     )
-    db.add(new_match)
+
+    db.add(match_record)
     db.commit()
     db.refresh(winner)
     db.refresh(loser)
 
     return {
         "message": f"Match recorded! {winner.username} defeated {loser.username}",
-        "match_id": new_match.id,
+        "match_id": match_record.id,
         "bounty_change": bounty_change,
         "new_bounties": {
             winner.username: winner.bounty,
@@ -146,6 +152,47 @@ async def report_match(match: MatchBase, db: db_dependency):
             loser.username: loser.rank
         }
     }
+
+def handle_cloudbot_match(match, player1, player2, db, base_change):
+    # Identify human player
+    human_player = player1 if match.player2_username == "Cloud-Bot" else player2
+    human_username = human_player.username if human_player else None
+
+    if not human_player:
+        raise HTTPException(status_code=400, detail="No registered human player found")
+
+    human_won = match.winner_username == human_username
+    bounty_change = base_change if human_won else -base_change
+
+    # Update human player
+    human_player.bounty = max(0, human_player.bounty + bounty_change)
+    if human_won:
+        human_player.wins += 1
+    else:
+        human_player.losses += 1
+    human_player.rank = calculate_rank(human_player.bounty)
+
+    # Build match record
+    match_record = models.Match(
+        player1_id=player1.id if player1.username != "Cloud-Bot" else None,
+        player2_id=player2.id if player2.username != "Cloud-Bot" else None,
+        winner_id=human_player.id if human_won else None,
+        bounty_change=bounty_change
+    )
+
+    db.add(match_record)
+    db.commit()
+    db.refresh(human_player)
+
+    bot_name = match.player1_username if match.player1_username == "Cloud-Bot" else match.player2_username
+    return {
+        "message": f"Match recorded! {match.winner_username} defeated {bot_name if not human_won else human_username}",
+        "match_id": match_record.id,
+        "bounty_change": bounty_change,
+        "new_bounties": {human_username: human_player.bounty},
+        "new_ranks": {human_username: human_player.rank}
+    }
+
 
 def calculate_rank(bounty: int) -> str:
     """Determine rank based on bounty"""

@@ -20,7 +20,7 @@ class PlayerBase(BaseModel):
     rank: str = 'Bronze'
     bounty: int = 0
 
-class MatchCreate(BaseModel):
+class MatchBase(BaseModel):
     player1_id: int
     player2_id: int
     winner_id: int

@@ -5,7 +5,7 @@ import models
 from database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from fastapi import status
-from constants import RANK_THRESHOLDS
+from constants import RANK_THRESHOLDS, CLOUD_BOT_ID
 from pydantic import parse_obj_as
 
 app = FastAPI()
@@ -95,11 +95,11 @@ async def report_match(match: MatchBase, db: db_dependency):
     BASE_CHANGE = 25
 
     # Fetch players from DB
-    player1 = db.query(models.Player).filter(models.Player.username == match.player1_id).first()
-    player2 = db.query(models.Player).filter(models.Player.username == match.player2_id).first()
+    player1 = db.query(models.Player).filter(models.Player.id == match.player1_id).first()
+    player2 = db.query(models.Player).filter(models.Player.id == match.player2_id).first()
 
     # Determine if this is a Cloud-Bot match
-    is_vs_cloudbot = match.player1_username == "Cloud-Bot" or match.player2_username == "Cloud-Bot"
+    is_vs_cloudbot = match.player1_id == CLOUD_BOT_ID or match.player2_id == CLOUD_BOT_ID
 
     if is_vs_cloudbot:
         return handle_cloudbot_match(match, player1, player2, db, BASE_CHANGE)
@@ -108,10 +108,10 @@ async def report_match(match: MatchBase, db: db_dependency):
     if not player1 or not player2:
         raise HTTPException(status_code=404, detail="One or both players not found")
 
-    if match.winner_username not in [player1.username, player2.username]:
-        raise HTTPException(status_code=400, detail="Winner must match one of the player usernames")
+    if match.winner_id not in [player1.id, player2.id]:
+        raise HTTPException(status_code=400, detail="Winner must match one of the player ids")
 
-    winner, loser = (player1, player2) if match.winner_username == player1.username else (player2, player1)
+    winner, loser = (player1, player2) if match.winner_id == player1.id else (player2, player1)
 
     # Calculate bounty change
     #bounty_change = max(10, 50 - (winner.bounty - loser.bounty) // 10)
@@ -175,7 +175,7 @@ def calculate_bounty_changes(winner_bounty, loser_bounty):
 
 def handle_cloudbot_match(match, player1, player2, db, base_change):
     # Determine if Cloud-Bot is player1 or player2
-    if match.player1_username == "Cloud-Bot":
+    if match.player1_id == CLOUD_BOT_ID:
         cloudbot_player = player1
         human_player = player2
     else:
@@ -188,7 +188,7 @@ def handle_cloudbot_match(match, player1, player2, db, base_change):
     if not human_player:
         raise HTTPException(status_code=400, detail="No registered human player found")
 
-    human_won = match.winner_username == human_username
+    human_won = match.winner_id == human_player.id
     bounty_change = base_change if human_won else -base_change
 
     # Update human player's stats

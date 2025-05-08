@@ -8,3 +8,5 @@ RANK_THRESHOLDS = {
     "Warlord": 2200,
     "Most Wanted": 3000
 }
+
+CLOUD_BOT_ID = 1363383904651972620

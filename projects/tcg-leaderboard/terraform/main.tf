@@ -75,14 +75,20 @@ resource "aws_iam_role_policy" "ssm_read" {
   role   = aws_iam_role.ec2_role.name
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
-      Action   = ["ssm:GetParameters"],
-      Effect   = "Allow",
-      Resource = ["arn:aws:ssm:us-east-1:*:parameter/discord-bot/*"]
-    }]
+    Statement = [
+      {
+        Action   = ["ssm:GetParameters"],
+        Effect   = "Allow",
+        Resource = ["arn:aws:ssm:us-east-1:*:parameter/cloud-bot/*"]
+      },
+      {
+        Action   = ["ssm:GetParametersByPath"],
+        Effect   = "Allow",
+        Resource = ["arn:aws:ssm:us-east-1:945154235157:parameter/cloud-bot*"]
+      }
+    ]
   })
 }
-
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2-docker-host-profile"
   role = aws_iam_role.ec2_role.name
@@ -114,6 +120,9 @@ module "ec2_instances" {
               sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               docker-compose version
+
+              # Install git
+              sudo yum install git -y
               EOF
 
   tags = {

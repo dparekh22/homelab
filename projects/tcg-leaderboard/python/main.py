@@ -114,12 +114,14 @@ async def report_match(match: MatchBase, db: db_dependency):
     winner, loser = (player1, player2) if match.winner_username == player1.username else (player2, player1)
 
     # Calculate bounty change
-    bounty_change = max(10, 50 - (winner.bounty - loser.bounty) // 10)
+    #bounty_change = max(10, 50 - (winner.bounty - loser.bounty) // 10)
+
+    bounty_gain, bounty_loss = calculate_bounty_changes(winner.bounty, loser.bounty)
 
     # Update stats
-    winner.bounty += bounty_change
+    winner.bounty += bounty_gain
     winner.wins += 1
-    loser.bounty = max(0, loser.bounty - bounty_change)
+    loser.bounty -= bounty_loss
     loser.losses += 1
 
     # Update ranks
@@ -131,7 +133,8 @@ async def report_match(match: MatchBase, db: db_dependency):
         player1_id=player1.id,
         player2_id=player2.id,
         winner_id=winner.id,
-        bounty_change=bounty_change
+        bounty_gain=bounty_gain,
+        bounty_loss=bounty_loss
     )
 
     db.add(match_record)
@@ -142,7 +145,10 @@ async def report_match(match: MatchBase, db: db_dependency):
     return {
         "message": f"Match recorded! {winner.username} defeated {loser.username}",
         "match_id": match_record.id,
-        "bounty_change": bounty_change,
+        "bounty_change": {
+            "gain": bounty_gain,
+            "loss": bounty_loss
+        }
         "new_bounties": {
             winner.username: winner.bounty,
             loser.username: loser.bounty
@@ -152,6 +158,20 @@ async def report_match(match: MatchBase, db: db_dependency):
             loser.username: loser.rank
         }
     }
+
+def calculate_bounty_changes(winner_bounty, loser_bounty):
+    diff = winner_bounty - loser_bounty
+
+    if winner_bounty >= loser_bounty:
+        # Expected win
+        bounty_gain = max(10, 30 - diff // 40)
+        bounty_loss = max(10, 20 + diff // 30)
+    else:
+        # Upset win
+        bounty_gain = min(100, 30 + abs(diff) // 10)
+        bounty_loss = max(20, 10 + abs(diff) // 20)
+
+    return bounty_gain, bounty_loss
 
 def handle_cloudbot_match(match, player1, player2, db, base_change):
     # Determine if Cloud-Bot is player1 or player2

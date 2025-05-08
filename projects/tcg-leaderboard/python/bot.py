@@ -211,7 +211,7 @@ async def report_match(ctx, winner: discord.Member, loser: discord.Member):
 
                         await ctx.send(
                             f"🏆 Match recorded! {winner.mention} defeated {loser.mention}\n"
-                            f"💰 Bounty change: {match_result['bounty_change']}\n"
+                            f"💰 New Bounties: {match_result['new_bounties']}\n"
                         )
                         return True
 

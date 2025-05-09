@@ -198,11 +198,19 @@ def handle_cloudbot_match(match: MatchBase, player1, player2, db: db_dependency,
     return {
         "message": f"Match recorded! {'You' if human_won else 'Cloud-Bot'} won.",
         "match_id": match_record.id,
-        "bounty_change": bounty_gain if human_won else -bounty_loss,
-        "new_bounties": {human_player.discord_id: human_player.bounty},
-        "new_ranks": {human_player.discord_id: human_player.rank}
+        "bounty_change": {
+            "gain": bounty_gain,
+            "loss": bounty_loss
+        },
+        "new_bounties": {
+            human_player.discord_id: human_player.bounty,
+            CLOUD_BOT_ID: 0,
+        },
+        "new_ranks": {
+            human_player.discord_id: human_player.rank,
+            CLOUD_BOT_ID: "N/A"
+        }
     }
-
 
 def calculate_bounty_changes(winner_bounty, loser_bounty):
     diff = winner_bounty - loser_bounty

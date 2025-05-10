@@ -57,15 +57,19 @@ async def on_ready():
     logging.info(f"Bot is online as {bot.user}")
 
 @bot.event
-async def on_disconnect():
-    await close_session()
-
-@bot.event
 async def on_shutdown():
     await close_session()
 
+@bot.event
+async def on_disconnect():
+    logging.warning("Bot disconnected - session kept alive for reconnect")
+
 async def get_session() -> aiohttp.ClientSession:
     global session
+    if session is None or session.closed:
+        await close_session()  # Clean up if needed
+        session = aiohttp.ClientSession()
+        logging.info("Session recreated")
     return session
 
 RANK_EMOJIS = {
@@ -120,7 +124,7 @@ async def on_raw_reaction_remove(payload):
 
     if payload.user_id == bot.user.id:
         return
-        
+
     guild = bot.get_guild(payload.guild_id)
     member = await guild.fetch_member(payload.user_id)
 

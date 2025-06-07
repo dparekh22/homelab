@@ -226,6 +226,19 @@ def handle_cloudbot_match(match: MatchBase, player1, player2, db: db_dependency,
         human_player.losses += 1
     human_player.rank = calculate_rank(human_player.bounty)
 
+    # Check for Yonko status if Most Wanted
+    if human_player.rank == "Most Wanted":
+        # Get current top 5 Most Wanted players
+        top_players = db.query(models.Player)\
+            .filter(models.Player.rank == "Most Wanted")\
+            .order_by(models.Player.bounty.desc())\
+            .limit(5)\
+            .all()
+
+        # Check if human qualifies for Yonko
+        if len(top_players) < 4 or human_player.bounty > top_players[3].bounty:
+            human_player.rank = "Yonko"
+
     # Record match
     match_record = models.Match(
         winner_discord_id=match.winner_discord_id,

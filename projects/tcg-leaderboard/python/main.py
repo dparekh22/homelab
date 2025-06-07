@@ -143,12 +143,12 @@ async def report_match(match: MatchBase, db: db_dependency):
 
         # Check if winner qualifies for Yonko
         if player1.rank == 'Most Wanted' and (len(top_players) < 4 or player1.bounty > top_players[3].bounty):
-            player1.rank == 'Yonko'
+            player1.rank = 'Yonko'
             yonko_changes[player1.discord_id] = {"status": "gained"}
 
         # Check if loser should lose Yonko status
         if player2.rank == 'Yonko' and len(top_players) >= 4 and loser.bounty < top_players[3].bounty:
-            player2.rank == 'Most Wanted'
+            player2.rank = 'Most Wanted'
             yonko_changes[player2.discord_id] = {"status": "lost"}
 
         # Check if someone was bumped out of top 4
@@ -182,7 +182,7 @@ async def report_match(match: MatchBase, db: db_dependency):
         for i, player in enumerate(leaderboard[:4], 1):
             if player.discord_id in yonko_changes:
                 yonko_changes[player.discord_id]["position"] = i
-                
+
     return {
         "message": f"Match recorded! {player1.username} defeated {player2.username}",
         "match_id": match_record.id,

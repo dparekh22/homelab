@@ -309,7 +309,7 @@ async def update_player_rank_role(member: discord.Member):
             if response.status == 200:
                 player_data = await response.json()
                 new_rank = player_data['rank']
-                new_role_name = f"OPTCG {new_rank.capitalize()}"
+                new_role_name = f"OPTCG {new_rank}"
                 
                 # Check if member already has the correct role
                 current_role = next(

@@ -5,7 +5,7 @@ from discord.ext import commands
 RANK_DATA = {
     "OPTCG Bronze": discord.Color.from_str("#CD7F32"),
     "OPTCG Silver": discord.Color.from_str("#C0C0C0"),
-    "OPTCG Gold": discord.Color.from_str("#FFD700"),
+    "OPTCG Gold": discord.Color.from_str("#FFD700"),    
     "OPTCG Platinum": discord.Color.from_str("#008080"),
     "OPTCG Diamond": discord.Color.from_str("#0CC0FF"),
     "OPTCG Captain": discord.Color.from_str("#800080"),

@@ -103,88 +103,78 @@ async def register_player(player: PlayerBase, db: db_dependency):
 @app.post('/matches/report', response_model=MatchReportResponse, status_code=status.HTTP_201_CREATED)
 async def report_match(match: MatchBase, db: db_dependency):
     BASE_CHANGE = 40
+    yonko_changes = {}
 
-    # Fetch players from DB using discord_id
+    # Fetch players
     player1 = db.query(models.Player).filter(models.Player.discord_id == match.winner_discord_id).first()
     player2 = db.query(models.Player).filter(models.Player.discord_id == match.loser_discord_id).first()
 
-    if match.winner_discord_id == CLOUD_BOT_ID or match.loser_discord_id == CLOUD_BOT_ID:
-        return handle_cloudbot_match(match, player1, player2, db, BASE_CHANGE)
-
-    # Check if both players exist
     if not player1 or not player2:
         raise HTTPException(status_code=404, detail="One or both players not found")
 
-    # Calculate the match results (bounty changes, etc.) and update stats
-    bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
-    adjusted_bounty_loss = min(bounty_loss, player2.bounty)
+    # Handle Cloud-Bot matches with same logic as human matches
+    if match.winner_discord_id == CLOUD_BOT_ID or match.loser_discord_id == CLOUD_BOT_ID:
+        human_player = player2 if player1.discord_id == CLOUD_BOT_ID else player1
+        human_won = player1.discord_id != CLOUD_BOT_ID
 
-    player1.bounty += bounty_gain
-    player1.wins += 1
-    player2.bounty -= adjusted_bounty_loss
-    player2.losses += 1
+        bounty_gain = BASE_CHANGE if human_won else 0
+        bounty_loss = 0 if human_won else BASE_CHANGE
+        
+        human_player.bounty = max(0, human_player.bounty + (bounty_gain if human_won else -bounty_loss))
+        if human_won:
+            human_player.wins += 1
+        else:
+            human_player.losses += 1
+    else:
+        # Human vs human match logic
+        bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
+        player1.bounty += bounty_gain
+        player1.wins += 1
+        player2.bounty -= min(bounty_loss, player2.bounty)
+        player2.losses += 1
 
-    # Update ranks
-    player1.rank = calculate_rank(player1.bounty)
-    player2.rank = calculate_rank(player2.bounty)
+    # Update base ranks for all players involved
+    if match.winner_discord_id != CLOUD_BOT_ID:
+        player1.rank = calculate_rank(player1.bounty)
+    if match.loser_discord_id != CLOUD_BOT_ID:
+        player2.rank = calculate_rank(player2.bounty)
 
-    yonko_changes = {}
+    # Unified Yonko handling for all match types
+    top_players = db.query(models.Player)\
+        .filter(models.Player.rank.in_(["Most Wanted", "Yonko"]))\
+        .order_by(models.Player.bounty.desc())\
+        .limit(10)\
+        .all()
 
-    if player1.rank == 'Most Wanted' or player2.rank == 'Most Wanted':
-        top_players = db.query(models.Player)\
-            .filter(models.Player.rank == "Most Wanted")\
-            .order_by(models.Player.bounty.desc())\
-            .limit(5)\
-            .all()
+    # Promote top 4 to Yonko
+    for i, player in enumerate(top_players[:4], 1):
+        if player.rank != "Yonko":
+            player.rank = "Yonko"
+            yonko_changes[player.discord_id] = {"status": "gained", "position": i}
 
-        # Check if winner qualifies for Yonko
-        if player1.rank == 'Most Wanted' and (len(top_players) < 4 or player1.bounty > top_players[3].bounty):
-            player1.rank = 'Yonko'
-            yonko_changes[player1.discord_id] = {"status": "gained"}
+    # Demote others to Most Wanted
+    for player in top_players[4:]:
+        if player.rank == "Yonko":
+            player.rank = "Most Wanted"
+            yonko_changes[player.discord_id] = {"status": "lost"}
 
-        # Check if loser should lose Yonko status
-        if player2.rank == 'Yonko' and len(top_players) >= 4 and player2.bounty < top_players[3].bounty:
-            player2.rank = 'Most Wanted'
-            yonko_changes[player2.discord_id] = {"status": "lost"}
-
-        # Check if someone was bumped out of top 4
-        if len(top_players) >= 4 and player1.rank == "Yonko":
-            bumped_player = top_players[3]
-            if bumped_player.discord_id not in [player1.discord_id, player2.discord_id]:
-                bumped_player.rank = "Most Wanted"
-                yonko_changes[bumped_player.discord_id] = {"status": "lost"}
-                db.add(bumped_player)
-
-    # Create a new match record
+    # Record match
     match_record = models.Match(
-        winner_discord_id=player1.discord_id,  # Assuming player1 is the winner
-        loser_discord_id=player2.discord_id,
-        winner_bounty_gain=bounty_gain,
-        loser_bounty_loss=bounty_loss
+        winner_discord_id=match.winner_discord_id,
+        loser_discord_id=match.loser_discord_id,
+        winner_bounty_gain=bounty_gain if 'bounty_gain' in locals() else 0,
+        loser_bounty_loss=bounty_loss if 'bounty_loss' in locals() else 0
     )
 
     db.add(match_record)
     db.commit()
-    db.refresh(player1)
-    db.refresh(player2)
-    
-    if yonko_changes:
-        leaderboard = db.query(models.Player)\
-            .filter(models.Player.rank.in_(["Most Wanted", "Yonko"]))\
-            .order_by(models.Player.bounty.desc())\
-            .limit(10)\
-            .all()
-
-        for i, player in enumerate(leaderboard[:4], 1):
-            if player.discord_id in yonko_changes:
-                yonko_changes[player.discord_id]["position"] = i
 
     return {
-        "message": f"Match recorded! {player1.username} defeated {player2.username}",
+        "message": f"Match recorded! {player1.username} defeated {player2.username}" if match.winner_discord_id != CLOUD_BOT_ID else f"Match recorded! {'You' if human_won else 'Cloud-Bot'} won.",
         "match_id": match_record.id,
         "bounty_change": {
-            "gain": bounty_gain,
-            "loss": bounty_loss
+            "gain": bounty_gain if 'bounty_gain' in locals() else 0,
+            "loss": bounty_loss if 'bounty_loss' in locals() else 0
         },
         "new_bounties": {
             player1.discord_id: player1.bounty,
@@ -193,7 +183,8 @@ async def report_match(match: MatchBase, db: db_dependency):
         "new_ranks": {
             player1.discord_id: player1.rank,
             player2.discord_id: player2.rank
-        }
+        },
+        "yonko_changes": yonko_changes
     }
 
 def handle_cloudbot_match(match: MatchBase, player1, player2, db: db_dependency, base_change: int):

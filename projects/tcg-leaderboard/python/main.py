@@ -115,10 +115,6 @@ async def report_match(match: MatchBase, db: db_dependency):
     if not player1 or not player2:
         raise HTTPException(status_code=404, detail="One or both players not found")
 
-    # Store original values
-    original_player1_rank = player1.rank
-    original_player2_rank = player2.rank
-
     # Calculate the match results (bounty changes, etc.) and update stats
     bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
     adjusted_bounty_loss = min(bounty_loss, player2.bounty)
@@ -147,14 +143,14 @@ async def report_match(match: MatchBase, db: db_dependency):
             yonko_changes[player1.discord_id] = {"status": "gained"}
 
         # Check if loser should lose Yonko status
-        if player2.rank == 'Yonko' and len(top_players) >= 4 and loser.bounty < top_players[3].bounty:
+        if player2.rank == 'Yonko' and len(top_players) >= 4 and player2.bounty < top_players[3].bounty:
             player2.rank = 'Most Wanted'
             yonko_changes[player2.discord_id] = {"status": "lost"}
 
         # Check if someone was bumped out of top 4
         if len(top_players) >= 4 and player1.rank == "Yonko":
             bumped_player = top_players[3]
-            if bumped_player.discord_id not in [winner.discord_id, loser.discord_id]:
+            if bumped_player.discord_id not in [player1.discord_id, player2.discord_id]:
                 bumped_player.rank = "Most Wanted"
                 yonko_changes[bumped_player.discord_id] = {"status": "lost"}
                 db.add(bumped_player)

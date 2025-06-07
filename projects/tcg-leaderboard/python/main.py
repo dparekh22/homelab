@@ -102,7 +102,7 @@ async def register_player(player: PlayerBase, db: db_dependency):
 
 @app.post('/matches/report', response_model=MatchReportResponse, status_code=status.HTTP_201_CREATED)
 async def report_match(match: MatchBase, db: db_dependency):
-    BASE_CHANGE = 25
+    BASE_CHANGE = 40
 
     # Fetch players from DB using discord_id
     player1 = db.query(models.Player).filter(models.Player.discord_id == match.winner_discord_id).first()
@@ -115,11 +115,14 @@ async def report_match(match: MatchBase, db: db_dependency):
     if not player1 or not player2:
         raise HTTPException(status_code=404, detail="One or both players not found")
 
-    # Calculate the match results (bounty changes, etc.)
-    bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
+    # Store original values
+    original_player1_rank = player1.rank
+    original_player2_rank = player2.rank
 
-    # Update stats
+    # Calculate the match results (bounty changes, etc.) and update stats
+    bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
     adjusted_bounty_loss = min(bounty_loss, player2.bounty)
+
     player1.bounty += bounty_gain
     player1.wins += 1
     player2.bounty -= adjusted_bounty_loss
@@ -128,6 +131,33 @@ async def report_match(match: MatchBase, db: db_dependency):
     # Update ranks
     player1.rank = calculate_rank(player1.bounty)
     player2.rank = calculate_rank(player2.bounty)
+
+    yonko_changes = {}
+
+    if player1.rank == 'Most Wanted' or player2.rank == 'Most Wanted':
+        top_players = db.query(models.Player)\
+            .filter(models.Player.rank == "Most Wanted")\
+            .order_by(models.Player.bounty.desc())\
+            .limit(5)\
+            .all()
+
+        # Check if winner qualifies for Yonko
+        if player1.rank == 'Most Wanted' and (len(top_players) < 4 or player1.bounty > top_players[3].bounty):
+            player1.rank == 'Yonko'
+            yonko_changes[player1.discord_id] = {"status": "gained"}
+
+        # Check if loser should lose Yonko status
+        if player2.rank == 'Yonko' and len(top_players) >= 4 and loser.bounty < top_players[3].bounty:
+            player2.rank == 'Most Wanted'
+            yonko_changes[player2.discord_id] = {"status": "lost"}
+
+        # Check if someone was bumped out of top 4
+        if len(top_players) >= 4 and player1.rank == "Yonko":
+            bumped_player = top_players[3]
+            if bumped_player.discord_id not in [winner.discord_id, loser.discord_id]:
+                bumped_player.rank = "Most Wanted"
+                yonko_changes[bumped_player.discord_id] = {"status": "lost"}
+                db.add(bumped_player)
 
     # Create a new match record
     match_record = models.Match(
@@ -141,7 +171,18 @@ async def report_match(match: MatchBase, db: db_dependency):
     db.commit()
     db.refresh(player1)
     db.refresh(player2)
+    
+    if yonko_changes:
+        leaderboard = db.query(models.Player)\
+            .filter(models.Player.rank.in_(["Most Wanted", "Yonko"]))\
+            .order_by(models.Player.bounty.desc())\
+            .limit(10)\
+            .all()
 
+        for i, player in enumerate(leaderboard[:4], 1):
+            if player.discord_id in yonko_changes:
+                yonko_changes[player.discord_id]["position"] = i
+                
     return {
         "message": f"Match recorded! {player1.username} defeated {player2.username}",
         "match_id": match_record.id,

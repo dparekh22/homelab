@@ -1,12 +1,12 @@
 RANK_THRESHOLDS = {
     "Bronze": 0,
-    "Silver": 100,
-    "Gold": 300,
-    "Platinum": 600,
-    "Diamond": 1000,
-    "Captain": 1500,
-    "Warlord": 2200,
-    "Most Wanted": 3000
+    "Silver": 50,
+    "Gold": 150,
+    "Platinum": 300,
+    "Diamond": 600,
+    "Captain": 1200,
+    "Warlord": 2000,
+    "Most Wanted": 2500
 }
 
 CLOUD_BOT_ID = '1363383904651972620'

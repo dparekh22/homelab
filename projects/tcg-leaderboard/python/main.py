@@ -119,9 +119,10 @@ async def report_match(match: MatchBase, db: db_dependency):
     bounty_gain, bounty_loss = calculate_bounty_changes(player1.bounty, player2.bounty)
 
     # Update stats
+    adjusted_bounty_loss = min(bounty_loss, player2.bounty)
     player1.bounty += bounty_gain
     player1.wins += 1
-    player2.bounty -= bounty_loss
+    player2.bounty -= adjusted_bounty_loss
     player2.losses += 1
 
     # Update ranks
@@ -176,7 +177,8 @@ def handle_cloudbot_match(match: MatchBase, player1, player2, db: db_dependency,
     bounty_loss = 0 if human_won else base_change
 
     # Update human stats
-    human_player.bounty = max(0, human_player.bounty + (bounty_gain if human_won else -bounty_loss))
+    adjusted_bounty_loss = min(bounty_loss, human_player.bounty)
+    human_player.bounty = max(0, human_player.bounty + (bounty_gain if human_won else -adjusted_bounty_loss))
     if human_won:
         human_player.wins += 1
     else:
@@ -215,14 +217,17 @@ def handle_cloudbot_match(match: MatchBase, player1, player2, db: db_dependency,
 def calculate_bounty_changes(winner_bounty, loser_bounty):
     diff = winner_bounty - loser_bounty
 
+    base_gain = 40
+    base_loss = 30
+
     if winner_bounty >= loser_bounty:
         # Expected win
-        bounty_gain = max(10, 30 - diff // 40)
-        bounty_loss = max(10, 20 + diff // 30)
+        bounty_gain = max(20, base_gain - diff // 20)
+        bounty_loss = max(15, base_loss + diff // 25)
     else:
         # Upset win
-        bounty_gain = min(100, 30 + abs(diff) // 10)
-        bounty_loss = max(20, 10 + abs(diff) // 20)
+        bounty_gain = min(150, base_gain + abs(diff) // 5)
+        bounty_loss = max(20, base_loss + abs(diff) // 10)
 
     return bounty_gain, bounty_loss
 
